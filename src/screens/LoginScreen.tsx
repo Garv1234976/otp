@@ -53,10 +53,39 @@ export default function LoginScreen({navigation}: Props) {
     }
   };
 
-  const loadSIM = async () => {
-    const simData = await getDeviceSIMs();
-    setSims(simData);
-  };
+const loadSIM = async () => {
+
+  const simData = await getDeviceSIMs();
+
+  let esimFound = false;
+
+  const formattedSIMs = simData.map((sim:any) => {
+
+    const isEsim =
+      sim.isEmbedded === true ||
+      sim.cardId === -1 ||
+      sim.simSlotIndex === -1;
+
+    if (isEsim) esimFound = true;
+
+    return {
+      ...sim,
+      isEsim
+    };
+  });
+
+  setSims(formattedSIMs);
+
+  // DEBUG MESSAGE
+  if (esimFound) {
+    console.log("✅ eSIM detected on this device");
+    Alert.alert("DEBUG", "This device HAS an eSIM");
+  } else {
+    console.log("❌ No eSIM detected");
+    Alert.alert("DEBUG", "This device does NOT have an eSIM");
+  }
+
+};
 const selectSIM = (sim:any) => {
 
   let number = sim.phoneNumber || '';
@@ -165,6 +194,7 @@ return (
   keyboardType="number-pad"
   style={styles.input}
   returnKeyType="next"
+  placeholderTextColor={'#333'}
 />
 
       {/* Password */}
@@ -176,6 +206,7 @@ return (
         onChangeText={setPassword}
         style={styles.input}
         returnKeyType="done"
+        placeholderTextColor={'#333'}
       />
 
       {/* Login button */}
@@ -221,8 +252,8 @@ return (
         >
 
           <Text style={styles.simCarrier}>
-            {sim.carrierName}
-          </Text>
+  {sim.carrierName} {sim.isEsim ? "(eSIM)" : "(Physical SIM)"}
+</Text>
 
           <Text style={styles.simNumber}>
             +{sim.phoneNumber}

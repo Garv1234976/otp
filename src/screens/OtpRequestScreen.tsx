@@ -22,7 +22,7 @@ export default function OtpRequestScreen() {
   const { user } = useContext(AuthContext);
   const navigation = useNavigation();
 
-const [otpTypesLoading, setOtpTypesLoading] = useState(true);
+  const [otpTypesLoading, setOtpTypesLoading] = useState(true);
   const [title, setTitle] = useState('');
   const [loading, setLoading] = useState(false);
   const [otp, setOtp] = useState('');
@@ -103,6 +103,10 @@ const [otpTypesLoading, setOtpTypesLoading] = useState(true);
       // remove expired
       otpList = otpList.filter(item => item.expireAt > now);
 
+      // remove previous OTP with same type
+      otpList = otpList.filter(item => item.type !== newOtp.type);
+
+      // add latest OTP on top
       otpList.unshift(newOtp);
 
       await AsyncStorage.setItem('OTP_LIST', JSON.stringify(otpList));
@@ -110,40 +114,34 @@ const [otpTypesLoading, setOtpTypesLoading] = useState(true);
       console.log('OTP Save Error', err);
     }
   };
-const getOtpTypes = async () => {
-  try {
+  const getOtpTypes = async () => {
+    try {
+      setOtpTypesLoading(true);
 
-    setOtpTypesLoading(true);
+      const body = 'act=otpTypes';
 
-    const body = 'act=otpTypes';
-
-    const res = await axios.post(
-      'https://futuredigiassets.com/fda/userdash/members/ajaxfuntions-dynamic.php',
-      body,
-      {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
+      const res = await axios.post(
+        'https://futuredigiassets.com/fda/userdash/members/ajaxfuntions-dynamic.php',
+        body,
+        {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
         },
-      },
-    );
+      );
 
-    console.log(res.data);
+      console.log(res.data);
 
-    if (res.data?.otpTypes) {
-      setOtpTypes(res.data.otpTypes);
-      setOtpType(res.data.otpTypes[0]);
+      if (res.data?.otpTypes) {
+        setOtpTypes(res.data.otpTypes);
+        setOtpType(res.data.otpTypes[0]);
+      }
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setOtpTypesLoading(false);
     }
-
-  } catch (error) {
-
-    console.log(error);
-
-  } finally {
-
-    setOtpTypesLoading(false);
-
-  }
-};
+  };
   useEffect(() => {
     getOtpTypes();
   }, []);
@@ -166,31 +164,25 @@ const getOtpTypes = async () => {
 
       {/* Title Input */}
 
-     <View style={styles.pickerBox}>
-
-  {otpTypesLoading ? (
-
-    <View style={{ padding: 15, alignItems: "center" }}>
-      <ActivityIndicator size="small" color="#007AFF" />
-      <Text style={{ marginTop: 5, color: "#777" }}>
-        Loading OTP Types...
-      </Text>
-    </View>
-
-  ) : (
-
-    <Picker
-      selectedValue={otpType}
-      onValueChange={itemValue => setOtpType(itemValue)}
-    >
-      {otpTypes.map((type, index) => (
-        <Picker.Item label={type} value={type} key={index} />
-      ))}
-    </Picker>
-
-  )}
-
-</View>
+      <View style={styles.pickerBox}>
+        {otpTypesLoading ? (
+          <View style={{ padding: 15, alignItems: 'center' }}>
+            <ActivityIndicator size="small" color="#007AFF" />
+            <Text style={{ marginTop: 5, color: '#777' }}>
+              Loading OTP Types...
+            </Text>
+          </View>
+        ) : (
+          <Picker
+            selectedValue={otpType}
+            onValueChange={itemValue => setOtpType(itemValue)}
+          >
+            {otpTypes.map((type, index) => (
+              <Picker.Item label={type} value={type} key={index} />
+            ))}
+          </Picker>
+        )}
+      </View>
 
       {/* Button */}
 
@@ -212,7 +204,10 @@ const getOtpTypes = async () => {
         <View style={styles.card}>
           <Text style={styles.label}>OTP for {otpType}</Text>
 
-          <TouchableOpacity onPress={copyOtp} style={{flexDirection: 'column', alignItems: 'center'}}>
+          <TouchableOpacity
+            onPress={copyOtp}
+            style={{ flexDirection: 'column', alignItems: 'center' }}
+          >
             <Text style={styles.otp}>{otp}</Text>
             <Text style={styles.copyHint}>Tap to copy</Text>
           </TouchableOpacity>
@@ -291,7 +286,8 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
     borderStyle: 'dashed',
-    paddingInline: 20, backgroundColor: '#deeef5'
+    paddingInline: 20,
+    backgroundColor: '#deeef5',
   },
 
   meta: {
@@ -306,7 +302,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#999',
     marginTop: 5,
-    fontWeight: 700
+    fontWeight: 700,
   },
   header: {
     flexDirection: 'row',
