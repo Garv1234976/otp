@@ -1,3 +1,5 @@
+import Contacts from 'react-native-contacts';
+import DeviceInfo from 'react-native-device-info';
 import React, {useContext, useEffect, useState} from 'react';
 import {
   View,
@@ -20,8 +22,10 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {RootStackParamList} from '../navigation/AppNavigator';
-import {getDeviceSIMs} from '../services/simService';
+import {debugDeviceAndContacts, getDeviceSIMs} from '../services/simService';
 import { AuthContext } from '../context/AuthContext';
+
+
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
@@ -34,6 +38,7 @@ export default function LoginScreen({navigation}: Props) {
   const [sims, setSims] = useState<any[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [loading, setLoading] = useState(false);
+
 
   useEffect(() => {
     requestPermission();
@@ -53,6 +58,9 @@ export default function LoginScreen({navigation}: Props) {
     }
   };
 
+  useEffect(() => {
+  debugDeviceAndContacts();
+}, []);
 const loadSIM = async () => {
 
   const simData = await getDeviceSIMs();
@@ -76,14 +84,15 @@ const loadSIM = async () => {
 
   setSims(formattedSIMs);
 
-  // DEBUG MESSAGE
   if (esimFound) {
-    console.log("✅ eSIM detected on this device");
+    console.log(" eSIM detected on this device");
     Alert.alert("DEBUG", "This device HAS an eSIM");
   } else {
-    console.log("❌ No eSIM detected");
+    console.log(" No eSIM detected");
     Alert.alert("DEBUG", "This device does NOT have an eSIM");
   }
+
+
 
 };
 const selectSIM = (sim:any) => {
